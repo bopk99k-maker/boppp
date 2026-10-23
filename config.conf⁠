@@ -1,0 +1,77 @@
+# Shadowrocket: 2026-10-23 15:20:46
+[General]
+prefer-ipv6 = false
+ipv6 = false
+update-url = https://raw.githubusercontent.com/Gaucuto/ver2promax/refs/heads/main/10in1
+
+[Rule]
+AND,((DOMAIN-SUFFIX,googlevideo.com),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN,youtubei.googleapis.com),(PROTOCOL,UDP)),REJECT
+
+[URL Rewrite]
+^https?:\/\/[\w-]+\.googlevideo\.com\/(?!(dclk_video_ads|videoplayback\?)).+&oad _ reject-200
+^https?:\/\/(www|s)\.youtube\.com\/api\/stats\/ads _ reject-200
+^https?:\/\/(www|s)\.youtube\.com\/(pagead|ptracking) _ reject-200
+^https?:\/\/s\.youtube\.com\/api\/stats\/qoe\?adcontext _ reject-200
+(^https?:\/\/[\w-]+\.googlevideo\.com\/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) $1$2$3 302
+
+[Header Rewrite]
+http-request '^https?://api.revenuecat.com/.+/(receipts$|subscribers/?(.*?)*$)' header-del x-revenuecat-etag
+http-request '^https?://api.revenuecat.com/.+/(receipts$|subscribers/?(.*?)*$)' header-del X-RevenueCat-ETag
+http-request ^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/user-customization-service\/v1\/customize$ header-del if-none-match
+
+[Map Local]
+^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad 'data-type=text data="" status-code=200'
+
+[Script]
+#Sub-Store
+Sub-Store Core = type=http-request,pattern=^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))),script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-1.min.js,requires-body=true,timeout=120
+Sub-Store Simple = type=http-request,pattern=^https?:\/\/sub\.store,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-0.min.js,requires-body=true
+Sub-Store Sync = type=cron,cronexp=0 0 * * *,wake-system=1,timeout=120,script-path=https://github.com/sub-store-org/Sub-Store/releases/latest/download/cron-sync-artifacts.min.js
+
+#YouTube Premium
+youtube.request = type=http-request,pattern=^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|reel\/reel_watch_sequence|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,engine=jsc,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/youtube.response.js
+youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/youtube.response.js,argument="{"lyricLang":"vi","captionLang":"vi","blockUpload":true,"blockImmersive":true,"debug":false}"
+
+# ===== Spotify iOS15 (app2smile) =====
+#!name=Spotify(iOS15)
+#!desc=部分解锁premium,建议重新登录,音质不能设置为超高
+# 1. 搜索界面 歌单/歌曲可以随意切换完全播放
+# 2. 音乐库已点赞歌曲随意切换完全播放
+spotify-json = type=http-request,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(artistview\/v1\/artist|album-entity-view\/v2\/album)\/,requires-body=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-json.js
+spotify-proto = type=http-response,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-proto.js,script-update-interval=0
+
+#SoundCloud
+SoundCloudGo+ = type=http-response,pattern=https://api-mobile.soundcloud.com/configuration/ios,requires-body=1,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/SoundCloudGoPlus.js
+
+#AlightMotion
+AlightMotion = type=http-response,pattern=^https:\/\/us-central1-alight-creative\.cloudfunctions\.net\/getAccountStatusAndLicenses,requires-body=true,max-size=131072,timeout=10,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/AlightMotion.js
+
+#PicsArt
+PicsArt = type=http-request,pattern=^https:\/\/api\.picsart\.com\/gw-v2\/shop\/subscription\/apple\/purchases,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/PicsArt.js,requires-body=true,timeout=60
+
+#Wink
+Wink = type=http-response,pattern=^https?:\/\/api-sub\.meitu\.com\/v2\/user\/vip_info_by_group\.json,requires-body=1,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/WinkVipCrack.js
+
+#Truecaller
+Truecaller = type=http-response,pattern=^https://premium-(.+)\.truecaller\.com/v\d/(subscriptions|products\/apple),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/TrueCaller.js
+
+#Kinemaster
+Kinemaster = type=http-response,pattern=^https:\/\/api-account\.kinemasters\.com\/v\d\/user\/subscribe$,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/Kinemaster.js
+
+#CamScanner
+Camscanner = type=http-response,pattern=https:\/\/(api|api-cs.*)\.intsig\.net\/purchase\/cs\/query_prop,requires-body=1,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/camScanner.js
+
+#BeautyPlus
+BeautyPlus = type=http-response,pattern=https:\/\/(api\.mr\.pixocial\.com\/v1\/manual_unlock|newbeee-api\.beautyplus\.com\/api\/v1\/asset\/balance),requires-body=true,max-size=-1,timeout=60,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/BeautyPlus.js
+
+#Locket
+revenuecat = type=http-response,pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts$|subscribers\/[^/]+$),requires-body=true,max-size=-1,timeout=60,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/Locket_DuyVinh09.js
+deleteHeader = type=http-request,pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers),script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/refs/heads/main/js/deleteHeader.js,timeout=60
+
+[MITM]
+ca-passphrase = y9wCibAV
+ca-p12 = MIIJugIBAzCCCXkGCSqGSIb3DQEHAaCCCWoEgglmMIIJYjCCB+kGCSqGSIb3DQEHBqCCB9owggfWAgEAMIIHzwYJKoZIhvcNAQcBMF4GCSqGSIb3DQEFDTBRMDAGCSqGSIb3DQEFDDAjBBBLhDHVuBUVGbLFx0za6QqDAgEBMAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBCcbvDySofRZmP0YdlOZFNqgIIHYA7f/G72IctspnnCHfHmGWEQsxLyzDe5MVcYhcAqygsehJFFLe9JvHB133lsB6eyhhmnpcuGt4D7s3RSfKFl1OeExGDdxEbUlB3agR1UXj3xm96XvT2U+/pfN7nRVT1Ng9allOi1/aZraoVho1tzze788XB+96Yyio6rBY9r0HQNyDk7B5EjVC9LmN36QvT2zEfadVEkGk23GxUblgVGt6RH0+tehjyPEVZtcYuTCA5lPHrHgTtSItdLNI2iFQjw9NRStpD5cqb+SBALGckn9OH0A2eyzEJMNPstfj9lTy12jQ8A0a6hv/Gz+eUj+Jz3z+A+nJ3MxtA1dA+OZPye+KX9osBvoXMZ+TUn4XI/5q399Cg1D4CrmVo0rFUHxapxvvwPbU09MriZnDGkvVgc9r9KnecZyEGsWzOtnaCvtp+LwTArgYq3fmElkwhjO0r+fnXzHmrLXHOHEVGn+3n3NxrYICHSdodi/YGGwFuz3hkVpoV1OlVSSYASJo4qSb+3rLeEpMU2jdETmRpDSupqmJHEN4XavzDwatiBgBeOvtGuOBuoyLHMlY1Db1D1aktPzDTKKHbah31bCgWQqPJOMvk6r55c8LnTkAGj5bDD9MgtvzyblEXIdRT8xJos3K9OMKRcCLvKNWix0qSczDaCiyOJEUPQR7hlpS4MP7zA9rmjO1p9pco0EdePrBa2hQ2T1yrhJV2XRalI67rR6dXyyKD9WeDFF2YG0IgwCUtGbuSupL7NUap5bpGiE/LG3wjvxt6VAqLm+4t4gnBZ7a0ILkCr8Ad41vFGWmXU7cCZUxcRxlZwUnOaiGbUnO4cA7YHrrCBQi57LfTWL7+3yE/qXhs3wPtLuD1WOCjyko/0wxJYtO4c6hQnJxyFIJqTIeIYdo2epGhTJtwCfj+QNTKS9K2o0xyis9UtQ1gkPSlfm+3hBxqJLON3Q87gFkS5LL6Zk3PbW5cua8Hucqe2ztdzajGlFgoYdGcdZhnHtMB7RS+wyrW25KA6GkDfloviF5eBjBojwkgULDC1iml/P9U41pSdWaDr7qRQJJokDouoKoix3dRxaTU0ri2WIz4KawtvSMUaA334h6rsVIYzYNanldST780trHaaG3I0GOjk8lVDRG5sJaEtNIgByWcseFSHZ0Is71480Gg5/N0f4xCt0JObwIEQFufdHIke5cawKkwtWcamCt7i/XHSAWGQ4Cc6JcC9tuTslt481UKRLXrGn+00yoNTN9/N0Sm/Ja6qeMSfLDljbOP3JuW7cYzfdqckzH5Qnyh5Uk/HINkeI21EMKGCoTxrt1zuSjA7E6rI9fJbqJrdrBUTy1SkcjXeHuw52pQevIbCisCbVBBRV2QVYMX3J8u7ECX8VZ4PSf7Hf+IEX8MCTYnYuIVvNQ631tRE5zSOHLTdEMe4d4ZnnrnJe/5wDVeUW/JqIBFY+zLK0CD31AkmgIdY2eOFYbjqhDH8o9NQBDDDlHvUSsD4N3fkgXzQ+uwynhao1f+isMc+OE71rYnxxVYJkRj9yPxvxQkYi5jdwldz3yd8IeXKvLyufpj3cfrEjmy1HAny3C+kEmXD1+RmTOtCf4QhYDLJk7USChsHuQn1Tw/SRA5xPupFP8sc4ZVvaIgAY0YfSKIuZqyjNfNaDyycp5FSX11zJdyaWLU/Ch0/MwcVv41mOACdu58IVfHKWJ+9Wie/rRH0qGaTm5cBaYEbfsmGAPuWjkCz74YIUCShmLneSRB+j0899fU1mE2w4qUHm7fU9s6vSk5K1Fj5vNHoLXdcRmPcP9KVMEXePpjj2HWYhhYdsC8cMbUBPPe0P034JzXwb9qv4IOi1t8VaFt620PAp288iFrjjT0aDn1U3UZjaWIQbQBYSw6Upnd6b9J3YAA4BjzUm4NUjEDBGNzcmLAEuF8wkOlozJaILk+iHJNTVWiHpCzohXZ1dQjJA4Ips+lhlzu2Jkk56FupSK+Oi4bt2URtVNMNbScAs4Bl7mBw8zqLO//WY3z1ki+F0UpSQPGoXgY8L8z7RRNzYDhEsvJV9tRQHaSW+jO9/xYEsXig4RgZ55MHrjszMQ0Mqu1eOIWKgR8fy+rHGCodrgViDJKf2nnpChoCPXnjunwjVtiCDfXkR1azHhnqCUNwqgf8Vo1Fyabl1klcjPR6A01oJ/hGwuFlcspegtCBSW2ImYcGXOF6EOXCULsw2F2qf/phjxAuMhyFbZiDQposk5ON9AdOm8uUtZI8Rfus1uaHNJxWB1OUdqGZx7V9x0uckK9W2/F6VX3u/8siyGSnHtX38ya2HA2dzfoLIPQo127CD6oak6cfzoctQthKn4KVu448DmUJ4lfuOMdo7lLlz2xdN7cB1UsDPlBNd1hUyb6+UgP5BGavkkTZxaMxarjYOENsXqco2IdBNvC84qN0NjzMhus/wR0NRh3fnzQq+/Z+5shM14fMZ2aFIrSwgH6dNu1qf1GbELhss6qkCd0Bp3yoVuPAiNb6j1ykIQKObABt8ufvAl0gNv0e1sMwggFxBgkqhkiG9w0BBwGgggFiBIIBXjCCAVowggFWBgsqhkiG9w0BDAoBAqCB9jCB8zBeBgkqhkiG9w0BBQ0wUTAwBgkqhkiG9w0BBQwwIwQQUWXbuY22Q2V0Jk1S8DOqzQIBATAMBggqhkiG9w0CCQUAMB0GCWCGSAFlAwQBKgQQ/MN5vChcjKroN23oZscD9ASBkOLUzoZm6R09vIZv82zhLnUWM7iAJrWnrmkhGg0PpYb3XGoeXtfLTrnscZ7s80WzZ3Rh+n2jyzaVsCD2zpp4nVU5QKVI3+gIbm4XnS/kE+EYENyEmgMq5j9dzWhd1r6V3/CchtlklCTYCApnyMt7PpQVhUhd4gWgKiQuKD+EoM4QLb0vg6sW5s33639xGALQYTFOMCMGCSqGSIb3DQEJFTEWBBRvnlAxwij/1KWHMyKvpojIRtSbGjAnBgkqhkiG9w0BCRQxGh4YAFMAaABhAGQAbwB3AHIAbwBjAGsAZQB0MDgwITAJBgUrDgMCGgUABBR0DqEtnC2OIc7daEp7raNGxHN66AQQEQeJba3WvTERdJibL147kwIBAQ==
+h2 = true
+enable = true
+hostname = %APPEND%, *.googlevideo.com, youtubei.googleapis.com, www.youtube.com, s.youtube.com, -redirector*.googlevideo.com, premium*.truecaller.com, sub.store, api.revenuecat.com, api-mobile.soundcloud.com, api.picsart.com, us-central1-alight-creative.cloudfunctions.net, api-sub.meitu.com, api-account.kinemasters.com, ap*.intsig.net, api.mr.pixocial.com, newbeee-api.beautyplus.com, spclient.wg.spotify.com, *spclient.spotify.com
